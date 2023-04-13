@@ -88,3 +88,80 @@ tree2.addChild(new TreeNode(7));
 tree2.children[1].addChild(new TreeNode(6));
 tree2.children[1].addChild(new TreeNode(8));
   
+
+Task 2
+
+const fetch = require('node-fetch');
+
+const getUsers = async () => {
+  const response = await fetch('https://fakestoreapi.com/users');
+  const users = await response.json();
+  return users;
+};
+
+const getProducts = async () => {
+  const response = await fetch('https://fakestoreapi.com/products');
+  const products = await response.json();
+  return products;
+};
+
+const getCarts = async () => {
+  const response = await fetch('https://fakestoreapi.com/carts/?startdate=2000-01-01&enddate=2023-04-07');
+  const carts = await response.json();
+  return carts;
+};
+
+const getTotalValueOfCategory = (products, category) => {
+  const productsInCategory = products.filter((product) => product.category === category);
+  const totalValue = productsInCategory.reduce((acc, product) => acc + product.price, 0);
+  return totalValue;
+};
+
+const getProductCategoriesTotalValues = async () => {
+  const products = await getProducts();
+  const categories = [...new Set(products.map((product) => product.category))];
+  const productCategoriesTotalValues = categories.map((category) => ({
+    category,
+    totalValue: getTotalValueOfCategory(products, category),
+  }));
+  return productCategoriesTotalValues;
+};
+
+
+const getCartWithHighestValue = async () => {
+  const carts = await getCarts();
+  const cartWithHighestValue = carts.reduce((prev, current) => (prev.total > current.total ? prev : current));
+  const users = await getUsers();
+  const owner = users.find((user) => user.id === cartWithHighestValue.userId);
+  return {
+    value: cartWithHighestValue.total,
+    owner: `${owner.firstName} ${owner.lastName}`,
+  };
+};
+
+
+const getUsersLivingFarthestApart = async () => {
+  const users = await getUsers();
+  let maxDistance = -Infinity;
+  let farthestUsers = [];
+  for (let i = 0; i < users.length - 1; i++) {
+    for (let j = i + 1; j < users.length; j++) {
+      const distance = calculateDistance(users[i].address.geo, users[j].address.geo);
+      if (distance > maxDistance) {
+        maxDistance = distance;
+        farthestUsers = [users[i], users[j]];
+      }
+    }
+  }
+  return farthestUsers;
+};
+
+
+const calculateDistance = (coord1, coord2) => {
+  const lat1 = parseFloat(coord1.lat);
+  const lon1 = parseFloat(coord1.lng);
+  const lat2 = parseFloat(coord2.lat);
+  const lon2 = parseFloat(coord2.lng);
+  const R = 6371;
+  const dLat = deg2rad(lat2 - lat1); 
+  const dLon = deg2rad(lon2 - lon1);
